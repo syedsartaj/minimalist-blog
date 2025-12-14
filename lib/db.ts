@@ -120,7 +120,7 @@ export async function getPosts(limit?: number) {
 
     const query = PostModel.find({ published: true })
       .sort({ publishedAt: -1, createdAt: -1 })
-      .lean()
+      .lean<(Post & { _id: mongoose.Types.ObjectId })[]>()
 
     if (limit) {
       query.limit(limit)
@@ -144,7 +144,7 @@ export async function getAllPosts() {
 
     const posts = await PostModel.find({})
       .sort({ createdAt: -1 })
-      .lean()
+      .lean<(Post & { _id: mongoose.Types.ObjectId })[]>()
 
     return posts.map(post => ({
       ...post,
@@ -165,7 +165,7 @@ export async function getPostById(id: string) {
       return null
     }
 
-    const post = await PostModel.findById(id).lean()
+    const post = await PostModel.findById(id).lean<Post & { _id: mongoose.Types.ObjectId }>()
 
     if (!post) {
       return null
@@ -186,7 +186,7 @@ export async function getPostBySlug(slug: string) {
   try {
     await connectDB()
 
-    const post = await PostModel.findOne({ slug, published: true }).lean()
+    const post = await PostModel.findOne({ slug, published: true }).lean<Post & { _id: mongoose.Types.ObjectId }>()
 
     if (!post) {
       return null
@@ -246,7 +246,7 @@ export async function updatePost(id: string, postData: Partial<Post>) {
       id,
       { $set: postData },
       { new: true, runValidators: true }
-    ).lean()
+    ).lean<Post & { _id: mongoose.Types.ObjectId }>()
 
     if (!updatedPost) {
       throw new Error('Post not found')
@@ -271,7 +271,7 @@ export async function deletePost(id: string) {
       throw new Error('Invalid post ID')
     }
 
-    const deletedPost = await PostModel.findByIdAndDelete(id).lean()
+    const deletedPost = await PostModel.findByIdAndDelete(id).lean<Post & { _id: mongoose.Types.ObjectId }>()
 
     if (!deletedPost) {
       throw new Error('Post not found')
