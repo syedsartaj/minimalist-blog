@@ -29,71 +29,16 @@ function transformBlog(blog: SmakslyBlog): BlogPost {
   };
 }
 
-const mockPosts: BlogPost[] = [
-  {
-    id: '1',
-    slug: 'getting-started-with-minimalist-design',
-    title: 'Getting Started with Minimalist Design',
-    excerpt: 'Discover the principles of minimalist design and how to apply them to create elegant, functional interfaces that prioritize content and user experience.',
-    date: '2024-03-15',
-    category: 'Design',
-    readTime: '5 min read'
-  },
-  {
-    id: '2',
-    slug: 'the-power-of-typography',
-    title: 'The Power of Typography',
-    excerpt: 'Typography is more than just choosing fonts. Learn how thoughtful type selection and hierarchy can transform your designs and improve readability.',
-    date: '2024-03-10',
-    category: 'Typography',
-    readTime: '7 min read'
-  },
-  {
-    id: '3',
-    slug: 'building-scalable-next-apps',
-    title: 'Building Scalable Next.js Applications',
-    excerpt: 'Best practices for structuring and scaling Next.js applications, from project organization to performance optimization and deployment strategies.',
-    date: '2024-03-05',
-    category: 'Development',
-    readTime: '10 min read'
-  },
-  {
-    id: '4',
-    slug: 'responsive-design-principles',
-    title: 'Responsive Design Principles',
-    excerpt: 'Create beautiful experiences across all devices with these fundamental responsive design principles and modern CSS techniques.',
-    date: '2024-02-28',
-    category: 'Design',
-    readTime: '6 min read'
-  },
-  {
-    id: '5',
-    slug: 'mastering-tailwind-css',
-    title: 'Mastering Tailwind CSS',
-    excerpt: 'Deep dive into Tailwind CSS utilities, customization options, and advanced techniques for building maintainable styling systems.',
-    date: '2024-02-20',
-    category: 'CSS',
-    readTime: '8 min read'
-  },
-  {
-    id: '6',
-    slug: 'the-art-of-simplicity',
-    title: 'The Art of Simplicity',
-    excerpt: 'Sometimes less is more. Explore how embracing simplicity in design and code can lead to more elegant and maintainable solutions.',
-    date: '2024-02-15',
-    category: 'Design',
-    readTime: '4 min read'
-  }
-];
+// Force dynamic rendering - fetch fresh data on every request
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function BlogPage() {
   // Fetch blogs from Smaksly database
   const smakslyBlogs = await getSmakslyBlogs();
 
-  // Use Smaksly blogs if available, otherwise fall back to mock posts
-  const posts = smakslyBlogs.length > 0
-    ? smakslyBlogs.map(transformBlog)
-    : mockPosts;
+  // Transform to display format
+  const posts = smakslyBlogs.map(transformBlog);
   return (
     <div className="min-h-screen flex flex-col bg-[#fafafa]">
       <Header />

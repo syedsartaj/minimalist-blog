@@ -4,37 +4,6 @@ import { Footer } from '@/components/Footer'
 import { BlogCard } from '@/components/BlogCard'
 import { getSmakslyBlogs, formatBlogDate, estimateReadTime, SmakslyBlog } from '@/lib/smaksly-blogs'
 
-// Fallback sample data when no blogs exist
-const sampleBlogs = [
-  {
-    slug: 'the-art-of-simple-living',
-    title: 'The Art of Simple Living',
-    excerpt: 'Discover how minimalism can transform your daily life and bring clarity to your thoughts.',
-    date: '2024-01-15',
-    readTime: '5 min read',
-    image: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800',
-    category: 'Lifestyle',
-  },
-  {
-    slug: 'finding-focus-digital-age',
-    title: 'Finding Focus in a Digital Age',
-    excerpt: 'Strategies for maintaining concentration and productivity when distractions are everywhere.',
-    date: '2024-01-10',
-    readTime: '7 min read',
-    image: 'https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?w=800',
-    category: 'Productivity',
-  },
-  {
-    slug: 'morning-rituals-success',
-    title: 'Morning Rituals for Success',
-    excerpt: 'How the first hour of your day can set the tone for everything that follows.',
-    date: '2024-01-05',
-    readTime: '4 min read',
-    image: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=800',
-    category: 'Wellness',
-  },
-]
-
 // Transform Smaksly blog to display format
 function transformBlog(blog: SmakslyBlog) {
   // Extract excerpt from body (first 150 chars, strip HTML)
@@ -52,14 +21,16 @@ function transformBlog(blog: SmakslyBlog) {
   }
 }
 
+// Force dynamic rendering - fetch fresh data on every request
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function Home() {
   // Fetch blogs from Smaksly database
   const smakslyBlogs = await getSmakslyBlogs()
 
-  // Transform to display format or use sample data if no blogs
-  const blogs = smakslyBlogs.length > 0
-    ? smakslyBlogs.map(transformBlog)
-    : sampleBlogs
+  // Transform to display format
+  const blogs = smakslyBlogs.map(transformBlog)
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
