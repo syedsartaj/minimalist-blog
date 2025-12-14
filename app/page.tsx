@@ -2,8 +2,9 @@ import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { BlogCard } from '@/components/BlogCard'
+import { getSmakslyBlogs, formatBlogDate, estimateReadTime, SmakslyBlog } from '@/lib/smaksly-blogs'
 
-// Sample blog data - in production, this comes from MongoDB via API
+// Fallback sample data when no blogs exist
 const sampleBlogs = [
   {
     slug: 'the-art-of-simple-living',
@@ -34,7 +35,31 @@ const sampleBlogs = [
   },
 ]
 
-export default function Home() {
+// Transform Smaksly blog to display format
+function transformBlog(blog: SmakslyBlog) {
+  // Extract excerpt from body (first 150 chars, strip HTML)
+  const plainText = blog.body.replace(/<[^>]*>/g, '').trim()
+  const excerpt = plainText.length > 150 ? plainText.substring(0, 150) + '...' : plainText
+
+  return {
+    slug: blog.slug,
+    title: blog.title,
+    excerpt,
+    date: formatBlogDate(blog.publish_date),
+    readTime: estimateReadTime(blog.body),
+    image: blog.image_url || 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800',
+    category: blog.category || 'General',
+  }
+}
+
+export default async function Home() {
+  // Fetch blogs from Smaksly database
+  const smakslyBlogs = await getSmakslyBlogs()
+
+  // Transform to display format or use sample data if no blogs
+  const blogs = smakslyBlogs.length > 0
+    ? smakslyBlogs.map(transformBlog)
+    : sampleBlogs
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -51,30 +76,32 @@ export default function Home() {
         </section>
 
         {/* Featured Post */}
-        <section className="max-w-4xl mx-auto px-6 mb-16">
-          <div className="border-t border-b border-gray-200 py-12">
-            <span className="text-sm text-accent font-medium uppercase tracking-wider">Featured</span>
-            <Link href={`/blog/${sampleBlogs[0].slug}`}>
-              <h2 className="text-3xl md:text-4xl font-bold text-primary mt-4 mb-4 hover:text-accent transition-colors">
-                {sampleBlogs[0].title}
-              </h2>
-            </Link>
-            <p className="text-lg text-secondary mb-4 leading-relaxed">
-              {sampleBlogs[0].excerpt}
-            </p>
-            <div className="flex items-center gap-4 text-sm text-secondary">
-              <span>{sampleBlogs[0].date}</span>
-              <span>•</span>
-              <span>{sampleBlogs[0].readTime}</span>
+        {blogs.length > 0 && (
+          <section className="max-w-4xl mx-auto px-6 mb-16">
+            <div className="border-t border-b border-gray-200 py-12">
+              <span className="text-sm text-accent font-medium uppercase tracking-wider">Featured</span>
+              <Link href={`/blog/${blogs[0].slug}`}>
+                <h2 className="text-3xl md:text-4xl font-bold text-primary mt-4 mb-4 hover:text-accent transition-colors">
+                  {blogs[0].title}
+                </h2>
+              </Link>
+              <p className="text-lg text-secondary mb-4 leading-relaxed">
+                {blogs[0].excerpt}
+              </p>
+              <div className="flex items-center gap-4 text-sm text-secondary">
+                <span>{blogs[0].date}</span>
+                <span>•</span>
+                <span>{blogs[0].readTime}</span>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Blog Grid */}
         <section className="max-w-6xl mx-auto px-6 pb-20">
           <h2 className="text-2xl font-bold text-primary mb-10">Recent Articles</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {sampleBlogs.map((blog) => (
+            {blogs.map((blog) => (
               <BlogCard key={blog.slug} {...blog} />
             ))}
           </div>

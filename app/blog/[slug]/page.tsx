@@ -2,6 +2,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { getSmakslyBlogBySlug, getSmakslyBlogs, formatBlogDate, estimateReadTime, SmakslyBlog } from '@/lib/smaksly-blogs';
 
 interface BlogPost {
   slug: string;
@@ -11,9 +12,31 @@ interface BlogPost {
   category: string;
   readTime: string;
   content: string;
+  image?: string;
   author: {
     name: string;
     role: string;
+  };
+}
+
+// Transform Smaksly blog to display format
+function transformSmakslyBlog(blog: SmakslyBlog): BlogPost {
+  const plainText = blog.body.replace(/<[^>]*>/g, '').trim();
+  const excerpt = plainText.length > 150 ? plainText.substring(0, 150) + '...' : plainText;
+
+  return {
+    slug: blog.slug,
+    title: blog.title,
+    excerpt,
+    date: formatBlogDate(blog.publish_date),
+    category: blog.category || 'General',
+    readTime: estimateReadTime(blog.body),
+    content: blog.body,
+    image: blog.image_url,
+    author: {
+      name: 'Author',
+      role: 'Writer'
+    }
   };
 }
 
@@ -364,13 +387,28 @@ Simplicity is a goal worth pursuing in both design and code. It requires discipl
 };
 
 export async function generateStaticParams() {
-  return Object.keys(mockPosts).map((slug) => ({
-    slug,
-  }));
+  // Get slugs from Smaksly blogs for static generation
+  const smakslyBlogs = await getSmakslyBlogs();
+  const smakslySlugs = smakslyBlogs.map((blog) => ({ slug: blog.slug }));
+
+  // Also include mock posts for fallback
+  const mockSlugs = Object.keys(mockPosts).map((slug) => ({ slug }));
+
+  return [...smakslySlugs, ...mockSlugs];
 }
 
-export default function BlogPostPage({ params }: { params: { slug: string } }) {
-  const post = mockPosts[params.slug];
+export default async function BlogPostPage({ params }: { params: { slug: string } }) {
+  // First try to get from Smaksly database
+  const smakslyBlog = await getSmakslyBlogBySlug(params.slug);
+
+  let post: BlogPost | undefined;
+
+  if (smakslyBlog) {
+    post = transformSmakslyBlog(smakslyBlog);
+  } else {
+    // Fallback to mock posts
+    post = mockPosts[params.slug];
+  }
 
   if (!post) {
     notFound();

@@ -1,9 +1,10 @@
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import Link from 'next/link';
+import { getSmakslyBlogs, formatBlogDate, estimateReadTime, SmakslyBlog } from '@/lib/smaksly-blogs';
 
 interface BlogPost {
-  id: number;
+  id: string;
   slug: string;
   title: string;
   excerpt: string;
@@ -12,9 +13,25 @@ interface BlogPost {
   readTime: string;
 }
 
+// Transform Smaksly blog to display format
+function transformBlog(blog: SmakslyBlog): BlogPost {
+  const plainText = blog.body.replace(/<[^>]*>/g, '').trim();
+  const excerpt = plainText.length > 200 ? plainText.substring(0, 200) + '...' : plainText;
+
+  return {
+    id: blog.id,
+    slug: blog.slug,
+    title: blog.title,
+    excerpt,
+    date: formatBlogDate(blog.publish_date),
+    category: blog.category || 'General',
+    readTime: estimateReadTime(blog.body),
+  };
+}
+
 const mockPosts: BlogPost[] = [
   {
-    id: 1,
+    id: '1',
     slug: 'getting-started-with-minimalist-design',
     title: 'Getting Started with Minimalist Design',
     excerpt: 'Discover the principles of minimalist design and how to apply them to create elegant, functional interfaces that prioritize content and user experience.',
@@ -23,7 +40,7 @@ const mockPosts: BlogPost[] = [
     readTime: '5 min read'
   },
   {
-    id: 2,
+    id: '2',
     slug: 'the-power-of-typography',
     title: 'The Power of Typography',
     excerpt: 'Typography is more than just choosing fonts. Learn how thoughtful type selection and hierarchy can transform your designs and improve readability.',
@@ -32,7 +49,7 @@ const mockPosts: BlogPost[] = [
     readTime: '7 min read'
   },
   {
-    id: 3,
+    id: '3',
     slug: 'building-scalable-next-apps',
     title: 'Building Scalable Next.js Applications',
     excerpt: 'Best practices for structuring and scaling Next.js applications, from project organization to performance optimization and deployment strategies.',
@@ -41,7 +58,7 @@ const mockPosts: BlogPost[] = [
     readTime: '10 min read'
   },
   {
-    id: 4,
+    id: '4',
     slug: 'responsive-design-principles',
     title: 'Responsive Design Principles',
     excerpt: 'Create beautiful experiences across all devices with these fundamental responsive design principles and modern CSS techniques.',
@@ -50,7 +67,7 @@ const mockPosts: BlogPost[] = [
     readTime: '6 min read'
   },
   {
-    id: 5,
+    id: '5',
     slug: 'mastering-tailwind-css',
     title: 'Mastering Tailwind CSS',
     excerpt: 'Deep dive into Tailwind CSS utilities, customization options, and advanced techniques for building maintainable styling systems.',
@@ -59,7 +76,7 @@ const mockPosts: BlogPost[] = [
     readTime: '8 min read'
   },
   {
-    id: 6,
+    id: '6',
     slug: 'the-art-of-simplicity',
     title: 'The Art of Simplicity',
     excerpt: 'Sometimes less is more. Explore how embracing simplicity in design and code can lead to more elegant and maintainable solutions.',
@@ -69,7 +86,14 @@ const mockPosts: BlogPost[] = [
   }
 ];
 
-export default function BlogPage() {
+export default async function BlogPage() {
+  // Fetch blogs from Smaksly database
+  const smakslyBlogs = await getSmakslyBlogs();
+
+  // Use Smaksly blogs if available, otherwise fall back to mock posts
+  const posts = smakslyBlogs.length > 0
+    ? smakslyBlogs.map(transformBlog)
+    : mockPosts;
   return (
     <div className="min-h-screen flex flex-col bg-[#fafafa]">
       <Header />
@@ -84,7 +108,7 @@ export default function BlogPage() {
           </div>
 
           <div className="space-y-12">
-            {mockPosts.map((post) => (
+            {posts.map((post) => (
               <article
                 key={post.id}
                 className="border-b border-gray-200 pb-12 last:border-b-0"
@@ -95,11 +119,7 @@ export default function BlogPage() {
                   </span>
                   <span className="text-sm text-[#666666]">•</span>
                   <time className="text-sm text-[#666666]">
-                    {new Date(post.date).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
+                    {post.date}
                   </time>
                   <span className="text-sm text-[#666666]">•</span>
                   <span className="text-sm text-[#666666]">{post.readTime}</span>
